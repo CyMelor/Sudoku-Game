@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独游戏</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="container">
+            <h1>数独游戏</h1>
+            
+            <div class="sudoku-board">
+                <table>
+                    <tbody id="sudoku-table">
+                        <!-- 数独网格将由JavaScript生成 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="message" id="message"></div>
+        </div>
+        
+        <div class="game-controls">
+            <select id="difficulty-select">
+                <option value="EASY">简单</option>
+                <option value="MEDIUM" selected>中等</option>
+                <option value="HARD">困难</option>
+            </select>
+            <label class="toggle-label">
+                实时检测
+                <input type="checkbox" id="real-time-toggle">
+                <span class="toggle-switch"></span>
+            </label>
+            <button id="start-btn">开始游戏</button>
+            <button id="reset-btn">重置游戏</button>
+            <button id="check-btn">检查答案</button>
+            <button id="solve-btn">自动解题</button>
+        </div>
+    </div>
+    
+    <script src="/js/script.js"></script>
+</body>
+</html>
