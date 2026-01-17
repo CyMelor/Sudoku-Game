@@ -182,6 +182,18 @@ class SudokuGame {
         return true;
     }
 
+    // 检查数独板是否填满
+    isBoardFull() {
+        for (let row = 0; row < 9; row++) {
+            for (let col = 0; col < 9; col++) {
+                if (this.board[row][col] === 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     // 检查当前板是否正确
     checkBoard() {
         for (let row = 0; row < 9; row++) {
@@ -216,6 +228,10 @@ class SudokuUI {
     constructor() {
         this.game = new SudokuGame();
         this.realTimeCheck = false; // 默认禁用实时检测功能
+        this.timerInterval = null;
+        this.seconds = 0;
+        this.minutes = 0;
+        this.firstMove = false; // 标记是否已经填入第一个数字
         this.initializeUI();
     }
 
@@ -231,8 +247,8 @@ class SudokuUI {
             document.getElementById('difficulty-select').value = savedDifficulty;
         }
         
-        this.game.generateGame();
-        this.renderBoard();
+        // 初始不生成数独，只显示空白界面
+        this.renderEmptyBoard();
     }
 
     // 创建数独网格
@@ -302,14 +318,17 @@ class SudokuUI {
             this.resetGame();
         });
 
-        // 检查答案事件
-        document.getElementById('check-btn').addEventListener('click', () => {
-            this.checkSolution();
-        });
+
 
         // 自动解题事件
         document.getElementById('solve-btn').addEventListener('click', () => {
             this.autoSolve();
+        });
+
+        // 保存题目事件
+        document.getElementById('save-btn').addEventListener('click', () => {
+            this.saveSudokuToServer();
+            this.updateMessage('题目已成功保存！', 'success');
         });
 
         // 实时检测开关事件
@@ -361,6 +380,20 @@ class SudokuUI {
         });
     }
 
+    // 渲染空白数独板
+    renderEmptyBoard() {
+        for (let row = 0; row < 9; row++) {
+            for (let col = 0; col < 9; col++) {
+                const input = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
+                
+                input.value = '';
+                input.classList.remove('filled', 'initial', 'error', 'correct');
+                input.readOnly = true; // 初始状态下所有格子都只读
+            }
+        }
+        this.updateMessage('请点击"开始游戏"按钮生成新的数独');
+    }
+    
     // 渲染数独板
     renderBoard() {
         for (let row = 0; row < 9; row++) {
@@ -405,6 +438,12 @@ class SudokuUI {
         } else {
             value = parseInt(value);
             input.classList.add('filled');
+            
+            // 检测是否是第一个数字填入
+            if (!this.firstMove) {
+                this.firstMove = true;
+                this.startTimer();
+            }
         }
 
         this.game.board[row][col] = value;
@@ -420,6 +459,11 @@ class SudokuUI {
             }
         } else {
             input.classList.remove('error', 'correct');
+        }
+        
+        // 检查数独板是否填满，如果填满则自动检查答案
+        if (this.game.isBoardFull()) {
+            this.checkSolution();
         }
     }
 
@@ -513,6 +557,7 @@ class SudokuUI {
     startNewGame() {
         this.game.generateGame();
         this.renderBoard();
+        this.resetTimer(); // 开始新游戏时重置计时器
         this.updateMessage('新游戏开始！', 'info');
     }
 
@@ -520,6 +565,7 @@ class SudokuUI {
     resetGame() {
         this.game.resetGame();
         this.renderBoard();
+        this.resetTimer(); // 重置游戏时重置计时器
         this.updateMessage('已清空填写的格子！', 'info');
     }
 
@@ -528,6 +574,7 @@ class SudokuUI {
         const isValid = this.game.checkBoard();
         if (isValid) {
             this.game.isSolved = true;
+            this.stopTimer(); // 数独完成，停止计时
             this.updateMessage('恭喜！你完成了数独游戏！', 'success');
         } else {
             this.updateMessage('数独还未完成或有错误！', 'error');
@@ -549,6 +596,77 @@ class SudokuUI {
         if (type) {
             messageElement.classList.add(type);
         }
+    }
+    
+    // 开始计时器
+    startTimer() {
+        if (!this.timerInterval) {
+            this.timerInterval = setInterval(() => {
+                this.seconds++;
+                if (this.seconds >= 60) {
+                    this.seconds = 0;
+                    this.minutes++;
+                }
+                this.updateTimerDisplay();
+            }, 1000);
+        }
+    }
+    
+    // 停止计时器
+    stopTimer() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    }
+    
+    // 重置计时器
+    resetTimer() {
+        this.stopTimer();
+        this.seconds = 0;
+        this.minutes = 0;
+        this.firstMove = false;
+        this.updateTimerDisplay();
+    }
+    
+    // 更新计时器显示
+    updateTimerDisplay() {
+        const minutesElement = document.getElementById('minutes');
+        const secondsElement = document.getElementById('seconds');
+        minutesElement.textContent = this.minutes.toString().padStart(2, '0');
+        secondsElement.textContent = this.seconds.toString().padStart(2, '0');
+    }
+    
+    // 将数独保存到服务器
+    saveSudokuToServer() {
+        // 将二维数组转换为一维数组
+        const flattenedBoard = this.game.board.flat();
+        
+        // 获取当前难度
+        const difficulty = document.getElementById('difficulty-select').value.toLowerCase();
+        
+        // 发送数据到后端
+        fetch('/api/save_sudoku', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                board: flattenedBoard,
+                difficulty: difficulty
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('数独已成功保存到服务器');
+            } else {
+                console.error('保存数独失败:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('保存数独时发生错误:', error);
+        });
     }
 }
 
