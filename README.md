@@ -13,6 +13,7 @@ Sudoku-Game/
 ├── js/
 │   └── script.js          # 游戏核心逻辑
 ├── app.py                 # 服务器启动脚本
+├── requirements.txt       # 项目依赖文件
 └── README.md              # 项目说明文档
 ```
 
@@ -22,6 +23,12 @@ Sudoku-Game/
 
 2. 或使用 Python 运行服务器脚本：
 
+安装依赖
+```bash
+pip install -r requirements.txt
+```
+
+运行服务器
 ```bash
 python app.py
 ```
