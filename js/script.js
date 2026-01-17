@@ -585,6 +585,7 @@ class SudokuUI {
     autoSolve() {
         this.game.autoSolve();
         this.renderBoard();
+        this.stopTimer(); // 停止计时器
         this.updateMessage('数独已自动解出！', 'info');
     }
 

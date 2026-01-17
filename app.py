@@ -49,7 +49,7 @@ def save_sudoku_image(board, difficulty, timestamp):
         x = i * cell_size
         draw.line([(x, 0), (x, size)], fill='black', width=line_width)
     
-    # 填充数字，为每个数字使用不同的字体
+    # 填充数字，使用固定字体
     for i in range(81):
         row = i // 9
         col = i % 9
@@ -60,23 +60,15 @@ def save_sudoku_image(board, difficulty, timestamp):
             x = col * cell_size + cell_size // 2
             y = row * cell_size + cell_size // 2
             
-            # 为当前单元格选择字体，循环使用字体列表
+            # 使用固定字体arial.ttf
             font_size = cell_size // 2
-            base_font_index = i % len(font_files)
             current_font = None
             
-            # 尝试加载字体，如果当前字体不可用则尝试下一个
-            for offset in range(len(font_files)):
-                font_index = (base_font_index + offset) % len(font_files)
-                font_file = font_files[font_index]
-                try:
-                    current_font = ImageFont.truetype(font_file, font_size)
-                    break
-                except Exception:
-                    continue
-            
-            # 如果所有字体都不可用，则使用默认字体
-            if current_font is None:
+            # 尝试加载固定字体
+            try:
+                current_font = ImageFont.truetype('arial.ttf', font_size)
+            except Exception:
+                # 如果固定字体不可用，则使用默认字体
                 current_font = ImageFont.load_default()
             
             # 获取文本大小并居中
